@@ -1,0 +1,181 @@
+<?php
+/**
+ * 
+ * QJob::startServer(array('runtimePath' => '/tmp'));
+ * QJob::enqueue('default', 'Mail', array('email' => 'bla@bla.com'));
+ * 
+ * 
+ * ex.:
+ * $jobs = 'jobs' => array(
+ *     'MyJob' => array(
+ *         'time' => '2:15',
+ * 		),
+ * );
+ * 
+ * $qjob = new QJob(array(
+ * 		'runtimePath' => dirname(__FILE__) . '/protected/runtime/jobs',
+ * 		'jobs' => array(
+ *     		'MyJob' => array(
+ *         		'time' => '2:15',
+ *         		'enabled' => 'true',
+ * 			),
+ *     		'OtherJob' => array(
+ *         		'interval' => '600',
+ *         		'enabled' => 'true',
+ * 			),
+ * 		)
+ * );
+ * 
+ * $qjob->run();
+ */
+
+require_once dirname(__FILE__) . '/QJobQueueManager.php';
+require_once dirname(__FILE__) . '/QJobQueue.php';
+require_once dirname(__FILE__) . '/QJobSchedule.php';
+require_once dirname(__FILE__) . '/QJobLocker.php';
+
+class QJob {
+	
+	const LAST_RUN_FILE = 'last_run.txt'; 
+	const JOB_INFO_FILE = '/status.srlzd';
+
+	/**
+	 * @var QJob
+	 */
+	public static $i;
+	public $runtimePath = null;
+	public $jobsPath = null;
+	public $dirMode = 0755;
+	public $jobs = array();
+	public $logger = null;
+
+	public function __construct($options = array())
+	{
+		self::$i = $this;
+		
+		foreach ($options as $k => $v) {
+			$this->$k = $v;
+		}
+		
+		if (strlen($this->runtimePath) > 1) {
+			$this->runtimePath = rtrim($this->runtimePath, '/');
+		}
+		
+		if ($this->runtimePath == null) {
+			$this->log($m = 'runtimePath is a required option.');
+			throw new Exception($m);
+		}
+		
+		if ($this->jobsPath == null) {
+			$this->log($m = 'jobsPath is a required option.');
+			throw new Exception($m);
+		}
+		
+		foreach ($this->jobs as $class => $opt) {
+			if (! isset($opt['queue'])) {
+				$this->jobs[$class]['queue'] = 'default';
+			}
+		}
+	}
+	
+	/**
+	 * @return QJobQueueManager
+	 */
+	public function getQueueManager()
+	{
+		$i = new QJobQueueManager();
+		$i->qjob = $this;
+		return $i;
+	}
+	
+	/**
+	 * @return QJobSchedule
+	 */
+	public function getSchedule()
+	{
+		$i = new QJobSchedule();
+		$i->qjob = $this;
+		return $i;
+	}
+	
+	public function run()
+	{
+		if (! file_exists($this->runtimePath)) {
+			mkdir($this->runtimePath, $this->dirMode, true);
+		}
+		
+		ignore_user_abort(true);
+		set_time_limit(600);
+	
+		// euqueue scheduled and periodic jobs
+		$this->getSchedule()->enqueueJobs();
+		
+		/* @var $queue QJobQueue */
+		foreach ($this->getQueueManager()->getQueues() as $queue) {
+			$queue->run();
+		}
+	}	
+
+	public function isUp()
+	{
+		$file = $this->getLastRunFilePath();
+	
+		$ret = false;
+	
+		if (! file_exists($file)) {
+			mkdir(dirname($file), $this->getOption('runtimeDirMode'), true);
+			file_put_contents($file, 0);
+			return false;
+		}
+	
+		// Consider as UP if last ran was before 120 seconds.
+		return time() - (int) file_get_contents($file) < 120;
+	}
+	
+	/**
+	 * @param mixed $job Job class name or instance.
+	 * @return boolean
+	 */
+	public function enqueue($class, $params, $queueName = 'default')
+	{
+		$q = $this->getQueueManager()->getQueue($queueName);
+		
+		$job = new QJobItem($class);
+		$job->params = $params;
+		return $q->enqueue($job);
+	}
+	
+	private function getJobsInfo()
+	{
+		$file = $this->getOption('runtimePath') . '/' . $this->JOB_INFO_FILE;
+		if (file_exists($file)) {
+			return unserialize(file_get_contents($file));
+		} else {
+			return array(
+				'lastRunDateTime' => '0000-00-00 00:00:00',
+			);			
+		}
+	}
+
+	private function setJobInfo($jobName, $key, $val)
+	{
+		$status = $this->getJobsInfo();
+		$status[$jobName][$key] = $val;
+		file_put_contents($this->getOption('runtimePath') . '/' . $this->JOB_INFO_FILE, serialize($status));
+	}
+	
+	public function getJobInfo($jobName, $key)
+	{
+		$info = $this->getJobsInfo();
+		return $info[$jobName][$key];
+	}
+
+	public function log($message)
+	{
+		if (is_object($this->logger) && method_exists($this->logger, 'log')) {
+			$this->logger->log($message);
+		} else {
+			error_log(get_class($this) . ': ' . $message, 0);
+		}		
+	}
+}

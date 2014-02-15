@@ -50,6 +50,7 @@
 
 require_once dirname(__FILE__) . '/QJobQueueManager.php';
 require_once dirname(__FILE__) . '/QJobQueue.php';
+require_once dirname(__FILE__) . '/QJobItem.php';
 require_once dirname(__FILE__) . '/QJobSchedule.php';
 require_once dirname(__FILE__) . '/QJobLocker.php';
 

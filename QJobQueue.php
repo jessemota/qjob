@@ -33,32 +33,41 @@ class QJobQueue {
 	public function run()
 	{
 		/* @var $job QJobItem */
-		foreach ($this->getJobs() as $job) {
-			if (! $job instanceof QJobItem) {
-				$this->log("Removing from queue: $job->file.");
-				@unlink($job->file);
+		foreach ($this->getEnqueuedJobs() as $jobDef) {
+			if (! $jobDef instanceof QJobItem) {
+				$this->log("Removing from queue: $jobDef->file.");
+				@unlink($jobDef->file);
 				continue;
 			}
 		
-			$locker = new QJobLocker(QJob::$i, $job->id);
+			$locker = new QJobLocker(QJob::$i, $jobDef->id);
 			if (! $locker->lock()) {
-				$this->log("Job $job->class is already locked.");
+				$this->log("Job $jobDef->class is already locked.");
 				continue;
 			}
 			
-			$class = $job->class;
+			$class = $jobDef->class;
 			
-			if (! class_exists($class)) {
+			if (! class_exists($class, false)) {
 				$file = QJob::$i->jobsPath . '/' . $class . '.php';
 				if (file_exists($file)) {
 					require_once $file;
 				} else {
 					$this->log("Job class '$class' could not be found. Removing from queue.");
-					$this->removeJob($job->id);
+					$this->removeJob($jobDef->id);
 				}
 			}
 			
-			$instance = new $class();
+			$jobInstance = new $class();
+			
+			if (! $jobInstance instanceof QJobItem) {
+				$this->log("$class: should extend QJobItem.");
+				continue;
+			}
+			
+			foreach (get_object_vars($jobDef) as $k => $v) {
+				$jobInstance->$k = $v;
+			}
 
 			$time = time();
 			$sucess = false;
@@ -66,7 +75,7 @@ class QJobQueue {
 
 			$this->log("$class: running... ");
 			try {
-				$instance->run();
+				$jobInstance->run($jobDef);
 				$sucess = true;
 			} catch (Exception $e) {
 				$errorMessage = $e->getMessage() . ' - ' . $e->getTraceAsString();
@@ -74,13 +83,13 @@ class QJobQueue {
 
 			if ($sucess) {
 				$this->log("$class: succeed.");
-				$this->removeJob($job->id);
+				$this->removeJob($jobDef->id);
 				$this->jobsInfo[$class]['lastRun'] = time();
 				$this->save();
 			} else {
-				if ($element->deleteOnFailure) {
+				if ($jobDef->removeOnError) {
 					$this->log("$class: failed. $errorMessage");
-					$this->removeJob($job);
+					$this->removeJob($jobDef->id);
 				} else {
 					$this->log("$class: waiting.");
 				}
@@ -136,7 +145,7 @@ class QJobQueue {
 		file_put_contents($this->getDataFile(), serialize($this->jobsInfo));
 	}
 
-	public function getJobs()
+	public function getEnqueuedJobs()
 	{
 		$jobs = array();
 		foreach (glob(QJob::$i->runtimePath . '/' . $this->name . '/*') as $file) {
@@ -149,9 +158,20 @@ class QJobQueue {
 		return $jobs;
 	}
 
+	public function hasJobOfClass($class)
+	{
+		foreach ($this->getEnqueuedJobs() as $jobDef) {
+			if ($jobDef == $jobDef->class) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	public function removeJob($id)
 	{
-		unlink($this->getPath() . '/' . $id);
+		@unlink($this->getPath() . '/' . $id);
 	}
 	
 	public function getPath()
@@ -162,19 +182,5 @@ class QJobQueue {
 		}
 		
 		return $p;
-	}
-}
-
-class QJobItem {
-	public $id = null;
-	public $file = null;
-	public $class = null;
-	public $params = array();
-	public $dateTimeEnqueued = null;
-
-	public function __construct($class)
-	{
-		$this->id = uniqid($class . '-', true);
-		$this->class = $class;
 	}
 }

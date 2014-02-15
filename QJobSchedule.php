@@ -66,7 +66,7 @@ class QJobSchedule {
 				$readyToEnqueue = true;
 			}
 	
-			if ($jobTimes != null) {
+			if (! $readyToEnqueue && $jobTimes != null) {
 				// Run time scheduled jobs
 				if ($currentTime - $this->tickTime > self::MAX_SECONDS_TO_CATCH_UP) {
 					$this->tickTime = $currentTime - self::MAX_SECONDS_TO_CATCH_UP;
@@ -105,7 +105,11 @@ class QJobSchedule {
 	
 			if ($readyToEnqueue) {
 				try {
-					$this->qjob->enqueue($jobClass, array(), $queueName);
+					if (! $this->qjob->getQueueManager()->getQueue($queueName)->hasJobOfClass($jobClass)) {
+						$this->qjob->enqueue($jobClass, array(), $queueName);
+					} else {
+						$this->log("Waiting: $jobClass: already in enqueue.");
+					}
 				} catch (Exception $e) {
 					$this->log("Error when enqueueing $jobClass: " . $e->getMessage() . ' ' . $e->getTraceAsString());
 				}

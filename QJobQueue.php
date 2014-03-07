@@ -75,7 +75,7 @@ class QJobQueue {
 
 			$this->log("$class: running... ");
 			try {
-				$jobInstance->run($jobDef);
+				$jobInstance->run();
 				$sucess = true;
 			} catch (Exception $e) {
 				$errorMessage = $e->getMessage() . ' - ' . $e->getTraceAsString();
@@ -161,7 +161,7 @@ class QJobQueue {
 	public function hasJobOfClass($class)
 	{
 		foreach ($this->getEnqueuedJobs() as $jobDef) {
-			if ($jobDef == $jobDef->class) {
+			if ($jobDef->class == $class) {
 				return true;
 			}
 		}

@@ -124,12 +124,12 @@ class QJob {
 			mkdir($this->runtimePath, $this->dirMode, true);
 		}
 		
-		ignore_user_abort(true);
+		//ignore_user_abort(true);
 		set_time_limit(600);
-	
+		
 		// euqueue scheduled and periodic jobs
 		$this->getSchedule()->enqueueJobs();
-		
+
 		/* @var $queue QJobQueue */
 		foreach ($this->getQueueManager()->getQueues() as $queue) {
 			$queue->run();
@@ -156,12 +156,12 @@ class QJob {
 	 * @param mixed $job Job class name or instance.
 	 * @return boolean
 	 */
-	public function enqueue($class, $params, $queueName = 'default')
+	public function enqueue($class, $params = null, $queueName = 'default')
 	{
 		$q = $this->getQueueManager()->getQueue($queueName);
 		
 		$job = new QJobItem($class);
-		$job->params = $params;
+		$job->params = $params == null ? array() : $params;
 		return $q->enqueue($job);
 	}
 	

@@ -34,15 +34,15 @@ class QJobQueue {
 	{
 		ini_set('max_execution_time', '0');
 		
-		/* @var $job QJobItem */
+		/* @var $job QJob */
 		foreach ($this->getEnqueuedJobs() as $jobDef) {
-			if (! $jobDef instanceof QJobItem) {
+			if (! $jobDef instanceof QJob) {
 				$this->log("Removing from queue: $jobDef->file.");
 				@unlink($jobDef->file);
 				continue;
 			}
 		
-			$locker = new QJobLocker(QJob::$i, $jobDef->id);
+			$locker = new QJobLocker(QJobManager::$i, $jobDef->id);
 			if (! $locker->lock()) {
 				$this->log("Cannot lock job '$jobDef->class' or already locked.");
 				continue;
@@ -51,7 +51,7 @@ class QJobQueue {
 			$class = $jobDef->class;
 			
 			if (! class_exists($class, false)) {
-				$file = QJob::$i->jobsPath . '/' . $class . '.php';
+				$file = QJobManager::$i->jobsPath . '/' . $class . '.php';
 				if (file_exists($file)) {
 					require_once $file;
 				} else {
@@ -62,8 +62,8 @@ class QJobQueue {
 			
 			$jobInstance = new $class();
 			
-			if (! $jobInstance instanceof QJobItem) {
-				$this->log("$class: should extend QJobItem.");
+			if (! $jobInstance instanceof QJob) {
+				$this->log("$class: should extend QJob.");
 				continue;
 			}
 			
@@ -119,7 +119,7 @@ class QJobQueue {
 	
 	public function log($message)
 	{
-		QJob::$i->log("[$this->name]: $message");
+		QJobManager::$i->log("[$this->name]: $message");
 	}
 	
 	private function getDataFile()
@@ -136,7 +136,7 @@ class QJobQueue {
 			$data = is_array($data) ? $data : array();
 		}
 		
-		foreach (QJob::$i->jobs as $jobClass => $opt) {
+		foreach (QJobManager::$i->jobs as $jobClass => $opt) {
 			if ($opt['queue'] != $this->name) continue;
 			$this->jobsInfo[$jobClass]['lastRun'] = isset($data[$jobClass]['lastRun']) ? $data[$jobClass]['lastRun'] : 0;
 		}
@@ -150,7 +150,7 @@ class QJobQueue {
 	public function getEnqueuedJobs()
 	{
 		$jobs = array();
-		foreach (glob(QJob::$i->runtimePath . '/' . $this->name . '/*') as $file) {
+		foreach (glob(QJobManager::$i->runtimePath . '/' . $this->name . '/*') as $file) {
 			if (! is_file($file)) continue;
 			$j = unserialize(file_get_contents($file));
 			$j->file = $file;
@@ -178,9 +178,9 @@ class QJobQueue {
 	
 	public function getPath()
 	{
-		$p = QJob::$i->runtimePath . '/' . $this->name;
+		$p = QJobManager::$i->runtimePath . '/' . $this->name;
 		if (! file_exists($p)) {
-			mkdir($p, QJob::$i->dirMode, true);
+			mkdir($p, QJobManager::$i->dirMode, true);
 		}
 		
 		return $p;

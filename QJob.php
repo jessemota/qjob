@@ -162,9 +162,11 @@ class QJob {
 		
 		$job = new QJobItem($class);
 		$job->params = $params == null ? array() : $params;
+		$job->queueName = $queueName;
 		return $q->enqueue($job);
 	}
 	
+	/*
 	private function getJobsInfo()
 	{
 		$file = $this->getOption('runtimePath') . '/' . $this->JOB_INFO_FILE;
@@ -176,7 +178,9 @@ class QJob {
 			);			
 		}
 	}
+	*/
 
+	/*
 	private function setJobInfo($jobName, $key, $val)
 	{
 		$status = $this->getJobsInfo();
@@ -189,6 +193,7 @@ class QJob {
 		$info = $this->getJobsInfo();
 		return $info[$jobName][$key];
 	}
+	*/
 
 	public function log($message)
 	{

@@ -108,7 +108,7 @@ class QJobSchedule {
 					if (! $this->qjob->getQueueManager()->getQueue($queueName)->hasJobOfClass($jobClass)) {
 						$this->qjob->enqueue($jobClass, array(), $queueName);
 					} else {
-						$this->log("Waiting: $jobClass: already in enqueue.");
+						$this->log("$jobClass: already in enqueue.");
 					}
 				} catch (Exception $e) {
 					$this->log("Error when enqueueing $jobClass: " . $e->getMessage() . ' ' . $e->getTraceAsString());

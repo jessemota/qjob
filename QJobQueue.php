@@ -32,6 +32,8 @@ class QJobQueue {
 
 	public function run()
 	{
+		ini_set('max_execution_time', '0');
+		
 		/* @var $job QJobItem */
 		foreach ($this->getEnqueuedJobs() as $jobDef) {
 			if (! $jobDef instanceof QJobItem) {
@@ -42,7 +44,7 @@ class QJobQueue {
 		
 			$locker = new QJobLocker(QJob::$i, $jobDef->id);
 			if (! $locker->lock()) {
-				$this->log("Job $jobDef->class is already locked.");
+				$this->log("Cannot lock job '$jobDef->class' or already locked.");
 				continue;
 			}
 			
@@ -117,14 +119,14 @@ class QJobQueue {
 	
 	public function log($message)
 	{
-		QJob::$i->log("[queue]: $message");
+		QJob::$i->log("[$this->name]: $message");
 	}
 	
 	private function getDataFile()
 	{
 		return $this->getPath() . '.srzd';
 	}
-	
+
 	public function load()
 	{
 		$data = array();

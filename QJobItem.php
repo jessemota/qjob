@@ -1,5 +1,6 @@
 <?php
 class QJobItem {
+	public $queueName = null;
 	public $id = null;
 	public $file = null;
 	public $class = null;

@@ -38,16 +38,17 @@ class QJobLocker {
 		$this->lockFileName = $this->qjob->runtimePath . '/' . $this->name . '.lck';
 	}
 	
-	public function lock()
+	public function lock($allowForceUnlock = true)
 	{
 		if ($this->isLocked()) {
-			if (! $this->forceUnlock()) {
-				return false;
-			}
+		    if ($allowForceUnlock) {
+    			return $this->forceUnlock();
+		    }
+		    
+		    return false;
 		}
 				
-		touch($this->lockFileName);
-		return true;
+		return touch($this->lockFileName);
 	}
 	
 	public function isLocked()
@@ -64,8 +65,9 @@ class QJobLocker {
 		$currentTime = time();
 		$changeTime = filectime($this->lockFileName);
 	
-		// if the lock is older than 1 hour, try to remove it
-		$minutesOld = $m = ($currentTime - $changeTime) * 60;
+		// if the lock is old, try to remove it
+		$minutesOld = $m = ($currentTime - $changeTime) / 60;
+		
 		if ($minutesOld >= self::FORCE_UNLOCK_MINUTES) {
 			$this->unlock();
 	
@@ -87,6 +89,11 @@ class QJobLocker {
 		if ($this->isLocked()) {
 			$this->log('error: could not remove lock file.');
 		}
+	}
+	
+	public function appendData($data)
+	{
+	    file_put_contents($this->lockFileName, $data);
 	}
 
 	public function log($message)

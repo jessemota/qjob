@@ -43,7 +43,6 @@ class QJobSchedule {
 		}		
 		
 		$this->load();
-		
 		foreach ($this->qjob->jobs as $jobClass => $opt) {
 			if (isset($opt['enabled'])) {
 				$isEnabled = $opt['enabled'] == 1 || $opt['enabled'] == 'true';

@@ -129,7 +129,11 @@ class QJobSchedule {
 		$dataFile = $this->getDataFilePath();
 	
 		if (file_exists($dataFile)) {
-			$data = unserialize(file_get_contents($dataFile));
+			$data = @unserialize(file_get_contents($dataFile));
+			if ($data === false) {
+			    $this->log("File $dataFile seems to have a invalid serialized data.");
+			    return false;
+			}
 	
 			foreach ($data as $k => $v) {
 				$this->$k = $v;
@@ -146,7 +150,13 @@ class QJobSchedule {
 			$data[$var] = $this->$var;	
 		}
 		
-		return file_put_contents($this->getDataFilePath(), serialize($data));
+		$filePath = $this->getDataFilePath();
+		if (! is_writable($filePath)) {
+		    $this->log("File $filePath is not writable.");
+		    return false;
+		}
+		
+		return file_put_contents($filePath, serialize($data));
 	}	
 	
 	public function log($message)

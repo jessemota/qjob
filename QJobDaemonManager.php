@@ -26,7 +26,8 @@ class QJobDaemonManager {
     {
         $locker = new QJobLocker(QJob::$i, 'daemon-' . $class);
         if (! $locker->lock(false)) {
-            $this->log("Cannot lock daemon '$class' or already locked.");
+            $this->log($m = "Cannot lock daemon '$class' or already locked.");
+            echo "$m\n";
             return false;
         }
 
@@ -36,7 +37,8 @@ class QJobDaemonManager {
             if (file_exists($file)) {
                 require_once $file;
             } else {
-                $this->log("Daemon class '$class' could not be found.");
+                $this->log($m = "Daemon class '$class' could not be found.");
+                echo "$m\n";
                 $locker->unlock();
                 return false;
             }
@@ -45,7 +47,8 @@ class QJobDaemonManager {
         $daemon = new $class();
         
         if (! $daemon instanceof QJobDaemon) {
-            $this->log("Daemon class '$class' does not extend QJobDaemon.");
+            $this->log($m = "Daemon class '$class' does not extend QJobDaemon.");
+            echo "$m\n";
             $locker->unlock();
             return false;
         }
@@ -64,6 +67,7 @@ class QJobDaemonManager {
             $status = null;
             return pcntl_waitpid($pid, &$status, WNOHANG) == 0;
         } else {
+            $this->log("Started '$class'.");
             // we are the child
         }
         
@@ -90,9 +94,18 @@ class QJobDaemonManager {
         $locker = $this->getLocker($name);
         
         if (file_exists($locker->lockFileName)) {
-            $this->log("Requesting stop: $name.");
+            $this->out("Requesting stop: $name.");
             $this->getLocker($name)->appendData(',STOP');
+            $this->out("Waiting for the process to end...");
+            while ($this->getLocker($name)->isLocked());
+        } else {
+            $this->out('It seems that the daemon is not running.');
         }
+    }
+    
+    public function out($message)
+    {
+        echo $message . "\n";
     }
     
     public function log($message)

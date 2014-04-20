@@ -98,6 +98,12 @@ class QJob {
 				$this->jobs[$class]['queue'] = 'default';
 			}
 		}
+		
+		// init logger
+		if (is_array($this->logger) && isset($this->logger['class'])) {
+		    $class = $this->logger['class'];
+		    $this->logger = new $class();
+		}		
 	}
 	
 	/**

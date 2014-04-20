@@ -65,7 +65,7 @@ class QJobDaemonManager {
             // success - we are the parent
             $locker->appendData($pid);
             $status = null;
-            return pcntl_waitpid($pid, &$status, WNOHANG) == 0;
+            return pcntl_waitpid($pid, $status, WNOHANG) == 0;
         } else {
             $this->log("Started '$class'.");
             // we are the child

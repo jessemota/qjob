@@ -103,7 +103,12 @@ class QJob {
 		if (is_array($this->logger) && isset($this->logger['class'])) {
 		    $class = $this->logger['class'];
 		    $this->logger = new $class();
-		}		
+		}
+
+		// init runtime path
+		if (! file_exists($this->runtimePath)) {
+		    mkdir($this->runtimePath, $this->dirMode);
+		}
 	}
 	
 	/**

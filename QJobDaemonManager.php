@@ -22,10 +22,10 @@ class QJobDaemonManager {
      * Start a daemon.
      * @param string $class
      */
-    public function start($class)
+    public function start($class, $forceUnlock = false)
     {
         $locker = new QJobLocker(QJob::$i, 'daemon-' . $class);
-        if (! $locker->lock(false)) {
+        if (! $locker->lock($forceUnlock)) {
             $this->log($m = "Cannot lock daemon '$class' or already locked.");
             echo "$m\n";
             return false;

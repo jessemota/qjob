@@ -182,14 +182,22 @@ class QJob {
 		return $q->enqueue($job);
 	}
 
-	public function startDaemon($class)
+	public function startDaemon($class, $forceStart = false)
 	{
-	    $this->getDaemonManager()->start($class);
+	    $this->getDaemonManager()->start($class, $forceStart);
 	}
 	
 	public function stopDaemon($class)
 	{
 	    $this->getDaemonManager()->stop($class);
+	}
+
+	public function isDaemonRunning($name)
+	{
+	    $testCmd = "ps ax|grep -i $name|grep -v grep|cut -d ' ' -f1";
+	    $pids = array();
+	    exec($testCmd, $pids);
+	    return ! empty($pids);
 	}
 	
 	public function log($message)

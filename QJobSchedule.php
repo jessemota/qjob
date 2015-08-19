@@ -151,7 +151,7 @@ class QJobSchedule {
 		}
 		
 		$filePath = $this->getDataFilePath();
-		if (! is_writable($filePath)) {
+		if (file_exists($filePath) && ! is_writable($filePath)) {
 		    $this->log("File $filePath is not writable.");
 		    return false;
 		}

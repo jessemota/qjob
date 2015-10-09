@@ -94,6 +94,8 @@ class QJobQueue {
 				if ($jobDef->removeOnError) {
 					$this->log("$class: failed. $errorMessage");
 					$this->removeJob($jobDef->id);
+					$this->jobsInfo[$class]['lastRun'] = time();
+					$this->save();
 				} else {
 					$this->log("$class: waiting.");
 				}

@@ -92,13 +92,15 @@ class QJobSchedule {
 					if (in_array("$tickHour:$tickMinute", $jobTimesArray) &&
 							($currentTime - $lastRunTime) > 60) {
 						$readyToEnqueue = true;
-						break;
 					}
 		
 					// Advance to the next minute
-					while((int) date('i', $this->tickTime) == $tickMinute) {
+					while ((int) date('i', $this->tickTime) == $tickMinute) {
 						$this->tickTime++;
 					}
+					
+					if ($readyToEnqueue)
+					    break;
 				}
 			}
 	

@@ -156,7 +156,8 @@ class QJobQueue {
 		$jobs = array();
 		foreach (glob(QJob::$i->runtimePath . '/' . $this->name . '/*') as $file) {
 			if (! is_file($file)) continue;
-			$j = unserialize(file_get_contents($file));
+			$j = unserialize(file_get_contents($file));			
+			if (! is_object($j)) $j = new stdClass();
 			$j->file = $file;
 			$jobs[] = $j;
 		}

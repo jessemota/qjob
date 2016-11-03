@@ -1,4 +1,7 @@
 <?php
+
+namespace qjob;
+
 class QJobTask {
 	public $queueName = null;
 	public $id = null;

@@ -1,4 +1,7 @@
 <?php
+
+namespace qjob;
+
 /**
  Copyright (C) 2014 Renato Santana [http://www.renatosantana.com]
 
@@ -46,14 +49,6 @@
  * 
  * $qjob->run();
  */
-
-require_once dirname(__FILE__) . '/QJobQueueManager.php';
-require_once dirname(__FILE__) . '/QJobQueue.php';
-require_once dirname(__FILE__) . '/QJobSchedule.php';
-require_once dirname(__FILE__) . '/QJobLocker.php';
-require_once dirname(__FILE__) . '/QJobTask.php';
-require_once dirname(__FILE__) . '/QJobDaemonManager.php';
-require_once dirname(__FILE__) . '/QJobDaemon.php';
 
 class QJob {
 	

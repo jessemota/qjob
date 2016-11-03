@@ -1,4 +1,7 @@
 <?php
+
+namespace qjob;
+
 /**
  Copyright (C) 2014 Renato Santana [http://www.renatosantana.com]
 

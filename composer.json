@@ -1,3 +1,13 @@
 {
-    "name": "stnsolutions/qjob"
+	"name" : "qjob/qjob",
+	"type": "library",
+	"description" : "QJob",
+	"require" : {
+		"php" : ">=5.4"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"qjob\\":"./"
+		}
+	}
 }

@@ -1,4 +1,7 @@
 <?php
+
+namespace qjob;
+
 class QJobDaemonManager {
     
     /**

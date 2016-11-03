@@ -1,5 +1,7 @@
 <?php
 
+namespace qjob;
+
 class QJobDaemon {
     
     public function run()
